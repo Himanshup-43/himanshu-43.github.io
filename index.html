@@ -66,7 +66,7 @@
     <div class="row"><div>First units</div><div id="fUnits"></div></div>
     <div class="row"><div>Total units</div><div id="tUnits"></div></div>
     <div class="row"><div>Rate per unit</div><div id="rate"></div></div>
-    <div class="row"><div>Total Bill</div><div id="totalBill"></div></div>
+    <div class="row"><div>Total Bill</div><div id="totalBillOut"></div></div>
     <div class="row"><div>Ground floor bill</div><div id="gBill"></div></div>
     <div class="row"><div>First floor bill</div><div id="fBill"></div></div>
   </div>
@@ -142,6 +142,7 @@ function compute() {
   document.getElementById('rate').textContent = '₹ ' + fmt(rate, 2) + ' / unit';
   document.getElementById('gBill').textContent = '₹ ' + fmt(Math.round(gBill), 0);
   document.getElementById('fBill').textContent = '₹ ' + fmt(Math.round(fBill), 0);
+  document.getElementById('totalBillOut').textContent = '₹ ' + Math.round(totalBill);
 
   document.getElementById('results').style.display = 'block';
 }
