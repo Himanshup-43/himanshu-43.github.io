@@ -1,1 +1,149 @@
-Hi There
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <title>Floor-wise Light Bill Calculator</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <style>
+    body { font-family: system-ui, Arial, sans-serif; margin: 24px; line-height: 1.5; }
+    .grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 12px; }
+    label { font-weight: 600; }
+    input { width: 100%; padding: 8px; box-sizing: border-box; }
+    button { padding: 10px 14px; font-weight: 600; }
+    .card { border: 1px solid #ddd; border-radius: 8px; padding: 16px; margin-top: 16px; }
+    .warn { background: #fff3cd; border: 1px solid #ffeeba; padding: 10px; border-radius: 6px; }
+    .row { display: flex; justify-content: space-between; padding: 6px 0; border-bottom: 1px dashed #eee; }
+    .row:last-child { border-bottom: none; }
+    .muted { color: #666; font-size: 0.9em; }
+  </style>
+</head>
+<body>
+  <h2>Floor-wise Light Bill Calculator</h2>
+  <p class="muted">Inputs are meter readings and dates; outputs are units, shared rate, and each floor’s bill. Use this for upcoming months; enter only the current period’s correct readings and bill amount.</p>
+
+  <div class="card">
+    <div class="grid">
+      <div>
+        <label>Start date</label>
+        <input type="date" id="startDate">
+      </div>
+      <div>
+        <label>End date</label>
+        <input type="date" id="endDate">
+      </div>
+      <div>
+        <label>Ground start</label>
+        <input type="number" id="gStart" step="0.1" placeholder="e.g., 2400">
+      </div>
+      <div>
+        <label>Ground end</label>
+        <input type="number" id="gEnd" step="0.1" placeholder="e.g., 2514">
+      </div>
+      <div>
+        <label>First start</label>
+        <input type="number" id="fStart" step="0.1" placeholder="e.g., 1188">
+      </div>
+      <div>
+        <label>First end</label>
+        <input type="number" id="fEnd" step="0.1" placeholder="e.g., 1218">
+      </div>
+      <div>
+        <label>Total bill (₹)</label>
+        <input type="number" id="totalBill" step="0.01" placeholder="e.g., 1710">
+      </div>
+    </div>
+    <div style="margin-top:12px;">
+      <button onclick="compute()">Compute</button>
+      <button onclick="resetForm()" style="margin-left:8px;">Reset</button>
+    </div>
+    <div id="alert" class="warn" style="display:none; margin-top:12px;"></div>
+  </div>
+
+  <div id="results" class="card" style="display:none;">
+    <h3>Results</h3>
+    <div id="period" class="muted"></div>
+    <div class="row"><div>Ground units</div><div id="gUnits"></div></div>
+    <div class="row"><div>First units</div><div id="fUnits"></div></div>
+    <div class="row"><div>Total units</div><div id="tUnits"></div></div>
+    <div class="row"><div>Rate per unit</div><div id="rate"></div></div>
+    <div class="row"><div>Ground bill</div><div id="gBill"></div></div>
+    <div class="row"><div>First bill</div><div id="fBill"></div></div>
+  </div>
+
+<script>
+function fmt(n, d=2) {
+  return Number.isFinite(n) ? n.toFixed(d) : '-';
+}
+function parseNum(id) {
+  const v = parseFloat(document.getElementById(id).value);
+  return Number.isFinite(v) ? v : null;
+}
+function showAlert(msg) {
+  const a = document.getElementById('alert');
+  a.style.display = 'block';
+  a.textContent = msg;
+}
+function clearAlert() {
+  const a = document.getElementById('alert');
+  a.style.display = 'none';
+  a.textContent = '';
+}
+function resetForm() {
+  ['startDate','endDate','gStart','gEnd','fStart','fEnd','totalBill'].forEach(id => document.getElementById(id).value = '');
+  document.getElementById('results').style.display = 'none';
+  clearAlert();
+}
+function compute() {
+  clearAlert();
+
+  const startDate = document.getElementById('startDate').value;
+  const endDate = document.getElementById('endDate').value;
+  const gStart = parseNum('gStart');
+  const gEnd = parseNum('gEnd');
+  const fStart = parseNum('fStart');
+  const fEnd = parseNum('fEnd');
+  const totalBill = parseNum('totalBill');
+
+  if (!startDate || !endDate || gStart===null || gEnd===null || fStart===null || fEnd===null || totalBill===null) {
+    showAlert('Please fill all fields with valid numbers and dates.');
+    return;
+  }
+  if (new Date(endDate) < new Date(startDate)) {
+    showAlert('End date cannot be before start date.');
+    return;
+  }
+  if (gEnd < gStart || fEnd < fStart) {
+    showAlert('End readings must be greater than or equal to start readings.');
+    return;
+  }
+  if (totalBill < 0) {
+    showAlert('Total bill cannot be negative.');
+    return;
+  }
+
+  const gUnits = gEnd - gStart;
+  const fUnits = fEnd - fStart;
+  const tUnits = gUnits + fUnits;
+
+  if (tUnits <= 0) {
+    showAlert('Total units must be greater than zero.');
+    return;
+  }
+
+  const rate = totalBill / tUnits;
+  const gBill = gUnits * rate;
+  const fBill = fUnits * rate;
+
+  document.getElementById('period').textContent = `${startDate} to ${endDate}`;
+  document.getElementById('gUnits').textContent = fmt(gUnits, 1) + ' units';
+  document.getElementById('fUnits').textContent = fmt(fUnits, 1) + ' units';
+  document.getElementById('tUnits').textContent = fmt(tUnits, 1) + ' units';
+  document.getElementById('rate').textContent = '₹ ' + fmt(rate, 2) + ' / unit';
+  document.getElementById('gBill').textContent = '₹ ' + fmt(Math.round(gBill), 0);
+  document.getElementById('fBill').textContent = '₹ ' + fmt(Math.round(fBill), 0);
+
+  document.getElementById('results').style.display = 'block';
+}
+</script>
+</body>
+</html>
